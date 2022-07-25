@@ -154,7 +154,7 @@ frames:
 # 
 predefinedlists:
   # Check amr-wind/incflo_enums.H
-  bctypes:      &PREDEFINED_BCTYPES [pressure_inflow, pressure_outflow, mass_inflow, zero_gradient,  no_slip_wall, slip_wall, wall_model, fixed_gradient]
+  bctypes:      &PREDEFINED_BCTYPES [pressure_inflow, pressure_outflow, mass_inflow, zero_gradient,  no_slip_wall, slip_wall, wall_model, fixed_gradient, rans_wall_model]
   turbinetypes: &PREDEFINED_ACTUATORTYPES [TurbineFastLine, TurbineFastDisk, UniformCtDisk, JoukowskyDisk, FlatPlateLine]
 
   alwaysfalse:   &PREDEFINED_ALWAYSFALSE
@@ -463,7 +463,7 @@ inputwidgets:
     label:      Turbulence model
     frame:      frame_turbulence
     inputtype:  listbox
-    optionlist: [Laminar, OneEqKsgsM84, Smagorinsky]
+    optionlist: [Laminar, OneEqKsgsM84, Smagorinsky, KOmegaSSTABL, KOmegaSST]
     defaultval: 
     outputdef:
       AMR-Wind: turbulence.model
@@ -477,7 +477,7 @@ inputwidgets:
     label:      TKE source terms
     frame:      frame_turbulence
     inputtype:  listbox
-    optionlist: [KsgsM84Src]
+    optionlist: [KsgsM84Src, KwSSTSrc]
     outputdef:
       AMR-Wind: TKE.source_terms
 
@@ -974,6 +974,15 @@ inputwidgets:
     outputdef:
       AMR-Wind: zlo.tke_type
 
+  - name:       zlo_sdr_type
+    label:      "zlo SDR BC"
+    frame:      frame_zBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: zlo.sdr_type
+
   - name:       zhi_type
     label:      "zhi velocity BC"
     frame:      frame_zBC
@@ -1021,6 +1030,15 @@ inputwidgets:
     defaultval: #slip_wall
     outputdef:
       AMR-Wind: zhi.tke_type
+
+  - name:       zhi_sdr_type
+    label:      "zhi SDR BC"
+    frame:      frame_zBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: zhi.sdr_type
 
   # ============================================================
   # ========== ABL forcing selection ==========================
@@ -1259,6 +1277,26 @@ inputwidgets:
     outputdef:
       AMR-Wind: ABL.mo_gamma_h
       help:     Monin-Obukhov Gamma h parameter
+
+  - name:       ABL_init_type
+    label:      init type
+    frame:      frame_ABLprop
+    inputtype:  str
+    optionlist: ['const', 'simple']
+    defaultval: const
+    outputdef:
+      AMR-Wind: ABL.init_type
+      help:     Initialization type
+
+  - name:       ABL_wall_shear_stress_type
+    label:      Ground shear stress
+    frame:      frame_ABLprop
+    inputtype:  str
+    optionlist: [moeng, schumann, constant, schumann]
+    defaultval: moeng
+    outputdef:
+      AMR-Wind: ABL.wall_shear_stress_type
+      help:     ABL wall shear stress type
 
   - name:       random_gauss_mean
     label:      Random Gauss mean
