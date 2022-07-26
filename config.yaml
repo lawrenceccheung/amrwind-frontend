@@ -65,6 +65,24 @@ frames:
     title: Boundary conditions on Z faces
     toggled: True
 
+  # ==== Mesh mapping frames ==== 
+  - name:  frame_meshmap
+    tab:   Domain
+    title: Mesh mapping
+    toggled: True
+  - name:  frame_meshmap1
+    frame: frame_meshmap
+    title: Geom2ConstantScaling
+    row:   2
+    kwargs:
+      borderwidth: 0
+  - name:  frame_meshmap2
+    frame: frame_meshmap
+    title: ExpScaling
+    row:   3
+    kwargs:
+      borderwidth: 0
+
   # ==== ABL frames ==== 
   - name:  frame_ABLforcing
     tab:   ABL
@@ -783,6 +801,15 @@ inputwidgets:
     outputdef:
       AMR-Wind: xlo.tke_type
 
+  - name:       xlo_sdr_type
+    label:      "xlo SDR BC"
+    frame:      frame_xBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: xlo.sdr_type
+
   - name:       xhi_type
     label:      "xhi velocity BC"
     frame:      frame_xBC
@@ -829,6 +856,15 @@ inputwidgets:
     defaultval: #None
     outputdef:
       AMR-Wind: xhi.tke_type
+
+  - name:       xhi_sdr_type
+    label:      "xhi SDR BC"
+    frame:      frame_xBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: xhi.sdr_type
 
   - name:       ylo_type
     label:      "ylo velocity BC"
@@ -878,6 +914,15 @@ inputwidgets:
     outputdef:
       AMR-Wind: ylo.tke_type
 
+  - name:       ylo_sdr_type
+    label:      "ylo SDR BC"
+    frame:      frame_yBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: ylo.sdr_type
+
   - name:       yhi_type
     label:      "yhi velocity BC"
     frame:      frame_yBC
@@ -925,6 +970,15 @@ inputwidgets:
     defaultval: #None
     outputdef:
       AMR-Wind: yhi.tke_type
+
+  - name:       yhi_sdr_type
+    label:      "yhi SDR BC"
+    frame:      frame_yBC
+    inputtype:  str
+    optionlist: *PREDEFINED_BCTYPES
+    defaultval: 
+    outputdef:
+      AMR-Wind: yhi.sdr_type
 
   - name:       zlo_type
     label:      "zlo velocity BC"
@@ -1039,6 +1093,121 @@ inputwidgets:
     defaultval: 
     outputdef:
       AMR-Wind: zhi.sdr_type
+
+  # ============================================================
+  # ========== Mesh mapping parameters ========================
+  - name:       comment_meshmap
+    frame:      frame_meshmap
+    inputtype:  str
+    defaultval: "\n# --- mesh mapping parameters ---"
+    visible:    False
+    outputdef:
+      AMR-Wind: '#comment_meshmap'
+
+  - name:       geometry_mesh_mapping
+    label:      "Mesh mapping type"
+    frame:      frame_meshmap
+    inputtype:  listbox
+    optionlist: ['None','Geom2ConstantScaling', 'ExpScaling']
+    row:        1
+    defaultval: None
+    listboxopt:
+      width:    20
+    outputdef:
+      AMR-Wind: geometry.mesh_mapping
+    ctrlelem:
+      - frame:  frame_meshmap1
+        activewhen: ['Geom2ConstantScaling', 1]
+      - frame:  frame_meshmap2
+        activewhen: ['ExpScaling', 1]
+
+  # --- Parameters for Geom2ConstantScaling ---
+  - name:       Geom2ConstantScaling_sratio
+    label:      Stretching Ratio
+    frame:      frame_meshmap1
+    inputtype:  [float, float, float]
+    defaultval: [1.1, 1.1, 1.1]
+    outputdef:
+      AMR-Wind: Geom2ConstantScaling.sratio
+  - name:       Geom2ConstantScaling_delta0
+    label:      First cell height
+    frame:      frame_meshmap1
+    inputtype:  [float, float, float]
+    defaultval: [1.0, 1.0, 1.0]
+    outputdef:
+      AMR-Wind: Geom2ConstantScaling.delta0
+  - name:       Geom2ConstantScaling_transwidth
+    label:      Transition width
+    frame:      frame_meshmap1
+    inputtype:  [float, float, float]
+    defaultval: [0.10, 0.10, 0.10]
+    outputdef:
+      AMR-Wind: Geom2ConstantScaling.transwidth
+  - name:       Geom2ConstantScaling_translocation
+    label:      Transition loc
+    frame:      frame_meshmap1
+    inputtype:  [float, float, float]
+    defaultval: [50, 50, 75]
+    outputdef:
+      AMR-Wind: Geom2ConstantScaling.translocation
+  - name:       Geom2ConstantScaling_map_x
+    label:      "Map x direction"
+    frame:      frame_meshmap1
+    inputtype:  bool
+    defaultval: 0
+  - name:       Geom2ConstantScaling_map_y
+    label:      "Map y direction"
+    frame:      frame_meshmap1
+    inputtype:  bool
+    defaultval: 0
+  - name:       Geom2ConstantScaling_map_z
+    label:      "Map z direction"
+    frame:      frame_meshmap1
+    inputtype:  bool
+    defaultval: 1
+  - name:       Geom2ConstantScaling_do_map
+    label:    
+    frame:      frame_meshmap1
+    inputtype:  mergedboollist
+    mergedboollist:
+      - ['Geom2ConstantScaling_map_x', '1', '0']
+      - ['Geom2ConstantScaling_map_y', '1', '0']
+      - ['Geom2ConstantScaling_map_z', '1', '0']
+    outputdef:
+      AMR-Wind: Geom2ConstantScaling.do_map
+
+  # --- Parameters for ExpScaling ---
+  - name:       ExpScaling_delta0
+    label:      First cell height
+    frame:      frame_meshmap2
+    inputtype:  [float, float, float]
+    defaultval: [0.1, 0.1, 0.1]
+    outputdef:
+      AMR-Wind: ExpScaling.delta0
+  - name:       ExpScaling_map_x
+    label:      "Map x direction"
+    frame:      frame_meshmap2
+    inputtype:  bool
+    defaultval: 0
+  - name:       ExpScaling_map_y
+    label:      "Map y direction"
+    frame:      frame_meshmap2
+    inputtype:  bool
+    defaultval: 0
+  - name:       ExpScaling_map_z
+    label:      "Map z direction"
+    frame:      frame_meshmap2
+    inputtype:  bool
+    defaultval: 0
+  - name:       ExpScaling_do_map
+    label:    
+    frame:      frame_meshmap2
+    inputtype:  mergedboollist
+    mergedboollist:
+      - ['ExpScaling_map_x', '1', '0']
+      - ['ExpScaling_map_y', '1', '0']
+      - ['ExpScaling_map_z', '1', '0']
+
 
   # ============================================================
   # ========== ABL forcing selection ==========================
@@ -2189,6 +2358,11 @@ buttons:
     text:    Plot Sample
     frame:   frame_postprosampling
     command: "self.Samplepostpro_getplot"
+
+  - name:    plotMeshMapping
+    text:    Plot Mapping
+    frame:   frame_meshmap
+    command: "self.plotMeshMapping"
 
     
 popupwindow:

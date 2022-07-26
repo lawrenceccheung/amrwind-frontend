@@ -442,3 +442,132 @@ def plotDomain(self, ax=None):
     #self.figcanvas.show()
 
     return
+
+# -------------------------------------------------------------
+
+def xcoord_Geom2ConstantScaling(xi, delta0, r, L, W):
+    """
+    Stretching function for Geom2ConstantScaling mesh mapping
+    
+    xi:     integers from 0,..., N-1
+    delta0: first cell height
+    r:      stretching function
+    L:      transition location
+    W:      transition width
+    """
+
+    # Defined functions for Geom2ConstantScaling
+    hblend  = lambda xi, xiT, W: 0.5*(1+np.tanh((xi-xiT)/W))
+    xgeom   = lambda xi, delta0, r: delta0*(1-r**(xi+1))/(1-r)/r - delta0/r
+    xconst  = lambda xi, slope, xi0, L: slope*(xi - xi0) + L 
+    xiinverse = lambda x, delta0, r: np.log(1.0 - (x-delta0/r)*r*(1.0-r)/delta0)/np.log(r)
+
+    # Unnecessary functions for xcoord
+    #dhblend = lambda xi, xiT, W: 0.5/W*(mpmath.sech((xi-xiT)/W))**2
+    #dxgeom  = lambda xi, delta0, r: delta0/r/(r-1)*np.log(r)*r**(xi-1)
+    #dxconst = lambda xi, slope, xi0: slope*(xi)
+    #xideltamax = lambda deltamax, delta0, r: np.log(deltamax/delta0*r*r)/np.log(r)
+
+    # Get the match xi
+    xiL  = int(xiinverse(L, delta0, r))
+    Lmatch = xgeom(xiL, delta0, r)
+    # Get the slope
+    dxiL = xgeom(xiL, delta0, r) - xgeom(xiL-1, delta0, r)
+    
+    h  = hblend(xi, xiL, W)
+    xg = xgeom(xi, delta0, r)
+    xc = xconst(xi, dxiL, xiL, Lmatch)
+    return xg*(1.0-h) + h*xc
+
+
+def plot_gridlines(ax, xivec, coordfunc, *args, **kwargs):
+    for xi in xivec:
+        x = coordfunc(xi, *args)
+        ax.axhline(x,**kwargs)
+    return
+
+def plotMeshMapping(self, ax=None):
+    # Clear and resize figure
+    if ax is None:
+        # Clear and resize figure
+        canvaswidget=self.figcanvas.get_tk_widget()
+        w,h1 = self.winfo_width(), self.winfo_height()
+        canvaswidget.configure(width=w-self.leftframew-10, height=h1-75)
+        self.fig.clf()
+        ax1=self.fig.add_subplot(1,3,1)
+        ax2=self.fig.add_subplot(1,3,2)
+        ax3=self.fig.add_subplot(1,3,3)
+    allax = [ax1, ax2, ax3]
+    print("Plotting mesh mapping")
+
+    # Get the basic grid
+    prob_lo  = self.inputvars['prob_lo'].getval()
+    prob_hi  = self.inputvars['prob_hi'].getval()
+    n_cell   = self.inputvars['n_cell'].getval()
+    domainL  = np.array(prob_hi)-np.array(prob_lo)
+    dx       = domainL/np.array(n_cell)
+
+    # Create the uniform grid
+    unif_facex = []
+    for i in range(3):
+        facex = []
+        for ix in range(n_cell[i]):
+            facex.append(prob_lo[i] + float(ix)*dx[i])
+        facex.append(prob_hi[i])
+        unif_facex.append(facex)
+
+    # Get the mapping functions
+    idfunc = lambda x: x        # identity function
+    pargs = {'color':'b', 'lw':1.5}
+    mapping_type = self.inputvars['geometry_mesh_mapping'].getval()[0]
+    if mapping_type == 'None':
+        do_map = [False, False, False]
+        xinput     = unif_facex
+        coordfuncs = [idfunc, idfunc, idfunc]
+        fargs      = [{}, {}, {}]
+    elif mapping_type == 'Geom2ConstantScaling':
+        # Get the input parameters
+        do_map = self.inputvars['Geom2ConstantScaling_do_map'].getval()
+        do_map = [bool(eval(x)) for x in do_map]
+        sratio = self.inputvars['Geom2ConstantScaling_sratio'].getval()
+        delta0 = self.inputvars['Geom2ConstantScaling_delta0'].getval()
+        transW = self.inputvars['Geom2ConstantScaling_transwidth'].getval()
+        transL = self.inputvars['Geom2ConstantScaling_translocation'].getval()
+
+        xinput, coordfuncs, fargs = [], [], []
+        for i in range(3):
+            if do_map[i]:
+                xinput.append(np.linspace(0, n_cell[i]-1, n_cell[i]))
+                coordfuncs.append(xcoord_Geom2ConstantScaling)
+                fargs.append([delta0[i], sratio[i], transL[i], transW[i]])
+            else:
+                xinput.append(unif_facex[i])
+                coordfuncs.append(idfunc)
+                fargs.append({})
+    else:
+        # mapping type not supported!
+        print("Plotting mapping type "+mapping_type+" not supported!")
+        return
+    #print(mapping_type, do_map)
+    #print(xinput)
+    #print(coordfuncs)
+    #print(fargs)
+
+    # Plot the meshes
+    plot_gridlines(ax1, xinput[0], coordfuncs[0], *(fargs[0]), **pargs)
+    plot_gridlines(ax2, xinput[1], coordfuncs[1], *(fargs[1]), **pargs)
+    plot_gridlines(ax3, xinput[2], coordfuncs[2], *(fargs[2]), **pargs)
+
+    # Format the axes
+    ax1.set_title(r'X Grid')
+    ax2.set_title(r'Y Grid')
+    ax3.set_title(r'Z Grid')
+
+    ax1.set_xticks([])
+    ax2.set_xticks([])
+    ax3.set_xticks([])
+
+    ax1.set_ylabel('Physical coordinate')
+
+    self.figcanvas.draw()
+    return
